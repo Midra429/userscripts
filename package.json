@@ -1,0 +1,23 @@
+{
+  "name": "userscripts",
+  "description": "MidraのUserScript",
+  "homepage": "https://github.com/Midra429/userscripts",
+  "author": "Midra <me@midra.me> (https://github.com/Midra429)",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "create": "bun run scripts/create.ts",
+    "build": "bun run scripts/build.ts"
+  },
+  "dependencies": {
+    "mustache": "^4.2.0"
+  },
+  "devDependencies": {
+    "@clack/prompts": "^1.7.0",
+    "@types/mustache": "^4.2.6",
+    "@types/semver": "^7.8.0",
+    "@types/tampermonkey": "^5.0.5",
+    "rolldown": "^1.2.4",
+    "semver": "^7.8.5"
+  }
+}

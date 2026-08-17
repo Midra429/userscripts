@@ -1,20 +1,19 @@
 import { globSync, readFileSync, writeFileSync } from 'node:fs'
-import { relative, resolve } from 'node:path'
-import { cwd, exit } from 'node:process'
+import { resolve } from 'node:path'
+import { exit } from 'node:process'
 
 import { intro, isCancel, log, outro, select, spinner } from '@clack/prompts'
-import { rolldown } from 'rolldown'
 import semver from 'semver'
-import { generateMetadata } from 'userjs/libs/generateMetadata'
+import { buildUserJS } from 'userjs/build'
 
 intro('build')
 
 // ファイル一覧を取得
-const inputFilePaths = globSync([
+const scriptPaths = globSync([
   resolve(__dirname, '../src/entrypoints/*.ts'),
   resolve(__dirname, '../src/entrypoints/*/index.ts'),
 ]).sort()
-const scriptIds = inputFilePaths.map(
+const scriptIds = scriptPaths.map(
   (v) => v.match(/(?<=\/entrypoints\/)[^\/]+(?=(?:\/index)?\.ts$)/)![0]
 )
 
@@ -36,8 +35,9 @@ if (isCancel(scriptIdx)) {
 
 // スクリプトの詳細
 const scriptId = scriptIds[scriptIdx]
-const inputFilePath = inputFilePaths[scriptIdx]
-const { metadata } = (await import(inputFilePath)) as {
+const scriptPath = scriptPaths[scriptIdx]
+
+const { metadata } = (await import(scriptPath)) as {
   metadata: UserScriptMetadata
 }
 
@@ -80,8 +80,8 @@ if (newVersion !== currentVersion) {
   metadata.version = newVersion
 
   writeFileSync(
-    inputFilePath,
-    readFileSync(inputFilePath, { encoding: 'utf8' }).replace(
+    scriptPath,
+    readFileSync(scriptPath, { encoding: 'utf8' }).replace(
       /(export\s+const\s+metadata(?:\s*:\s*[\w$]+)?\s*=\s*\{[\s\S]*?\bversion\s*:\s*['"])[^'"]*(['"])/,
       `$1${newVersion}$2`
     )
@@ -95,52 +95,13 @@ const s = spinner()
 
 s.start('スクリプトをビルド中...')
 
-// UserScriptのヘッダー
-const header = generateMetadata(metadata)
-
-// rolldown
-const bundle = await rolldown({
-  input: 'virtual:main',
-  plugins: [
-    {
-      name: 'virtual',
-      resolveId(id) {
-        if (id === 'virtual:main') {
-          return id
-        }
-      },
-      load(id) {
-        if (id === 'virtual:main') {
-          return `import { main } from "${inputFilePath}"; main();`
-        }
-      },
-    },
-  ],
-  experimental: {
-    attachDebugInfo: 'none',
-  },
-})
-
-// 出力先
-const outFilePath = relative(
-  cwd(),
-  resolve(__dirname, '../dist', `${scriptId}.user.js`)
-)
-
 try {
-  // 出力
-  await bundle.write({
-    file: outFilePath,
-    format: 'iife',
-    codeSplitting: false,
-    banner: header,
-    comments: false,
-    strict: true,
-  })
+  // ビルド
+  await buildUserJS({ scriptId, scriptPath, metadata })
 
   s.stop('スクリプトをビルドしました')
 
-  outro(outFilePath)
+  outro('終了')
 } catch (err) {
   console.error(err)
 

@@ -103,6 +103,8 @@ if (existsSync(outFilePath)) {
       author: '${escapeSingleQuote(env.USERJS_AUTHOR)}',
       license: '${escapeSingleQuote(env.USERJS_LICENSE)}',
       match: [],
+      updateURL: '${escapeSingleQuote(env.USERJS_UPDATE_URL?.replaceAll('<id>', scriptId))}',
+      downloadURL: '${escapeSingleQuote(env.USERJS_DOWNLOAD_URL?.replaceAll('<id>', scriptId))}',
     }
 
     export function main() {}
@@ -116,5 +118,7 @@ if (existsSync(outFilePath)) {
 
   s.stop('ファイルを作成しました')
 
-  outro(outFilePath)
+  log.message(outFilePath)
+
+  outro('終了')
 }

@@ -1,5 +1,3 @@
-import { GMInfo, GMSetValue } from 'userjs/gm'
-
 import { SETTINGS_INIT_DATA } from './constants'
 import { Utils } from './utils'
 
@@ -17,7 +15,7 @@ export class Settings {
 
     const title = document.createElement('h2')
     title.className = 'fw-bold h3 mb-0 mt-3'
-    title.textContent = `${GMInfo?.script.name} v${GMInfo?.script.version}`
+    title.textContent = `${GM.info.script.name} v${GM.info.script.version}`
     this.#element.appendChild(title)
 
     const card = document.createElement('div')
@@ -107,7 +105,7 @@ export class Settings {
         '保存',
         async () => {
           await this.save()
-          alert(`[${GMInfo?.script.name}]\n設定を保存しました`)
+          alert(`[${GM.info.script.name}]\n設定を保存しました`)
           location.reload()
         },
         true
@@ -120,8 +118,6 @@ export class Settings {
   }
 
   async save() {
-    let promises: Promise<void>[] = []
-
     for (const key in this.#items) {
       const item = this.#items[key]
 
@@ -136,11 +132,9 @@ export class Settings {
       }
 
       if (value != null) {
-        promises.push(GMSetValue(`setting_${key}`, value))
+        await GM.setValue(`setting_${key}`, value)
       }
     }
-
-    await Promise.all(promises)
   }
 
   #generate = {

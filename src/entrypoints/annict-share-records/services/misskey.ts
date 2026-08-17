@@ -1,16 +1,14 @@
-import { GMGetValue, GMInfo } from 'userjs/gm'
-
 import { Utils } from '../utils'
 
 export const Misskey = {
   API: {
     REDIRECT_URL: 'https://midra.me/empty/oauth/asr/misskey',
 
-    getToken: async () => (await GMGetValue('misskeyToken', '')) ?? '',
+    getToken: () => GM.getValue<string>('misskeyToken', ''),
 
     async authorize() {
       const instance = Utils.getInstance(
-        (await Utils.getSetting('misskey_instance')) ?? ''
+        await Utils.getSetting('misskey_instance')
       )
 
       if (instance) {
@@ -27,10 +25,10 @@ export const Misskey = {
     },
 
     async requestToken(session: string) {
-      if (!session) return null
+      if (!session) return
 
       const instance = Utils.getInstance(
-        (await Utils.getSetting('misskey_instance')) ?? ''
+        await Utils.getSetting('misskey_instance')
       )
 
       if (instance) {
@@ -45,7 +43,7 @@ export const Misskey = {
 
           return json.token
         } catch (e) {
-          console.error(`[${GMInfo?.script.name}]`, e)
+          console.error(`[${GM.info.script.name}]`, e)
         }
       }
     },
@@ -54,7 +52,7 @@ export const Misskey = {
       text = text.trim()
 
       const instance = Utils.getInstance(
-        (await Utils.getSetting('misskey_instance')) ?? ''
+        await Utils.getSetting('misskey_instance')
       )
       const token = await Misskey.API.getToken()
 
@@ -76,7 +74,7 @@ export const Misskey = {
           })
           return await res.json()
         } catch (e) {
-          console.error(`[${GMInfo?.script.name}]`, e)
+          console.error(`[${GM.info.script.name}]`, e)
         }
       }
     },

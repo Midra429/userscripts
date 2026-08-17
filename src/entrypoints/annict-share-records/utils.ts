@@ -1,11 +1,13 @@
 import Mustache from 'mustache'
-import { GMGetValue } from 'userjs/gm'
 
 import { SETTINGS_INIT_DATA, SETTINGS_KEYS } from './constants'
 
 export const Utils = {
   async getSetting(key: (typeof SETTINGS_KEYS)[number]) {
-    return GMGetValue(`setting_${key}`, SETTINGS_INIT_DATA[key].default)
+    return GM.getValue<string | undefined>(
+      `setting_${key}`,
+      SETTINGS_INIT_DATA[key].default
+    )
   },
 
   async getSettings() {
@@ -14,28 +16,22 @@ export const Utils = {
     } = {}
 
     for (const key of SETTINGS_KEYS) {
-      settings[key] =
-        (await GMGetValue(`setting_${key}`, SETTINGS_INIT_DATA[key].default)) ??
-        undefined
+      settings[key] = await this.getSetting(key)
     }
 
     return settings
   },
 
-  getInstance(str: string) {
-    str = str.trim()
-
-    let hostname = ''
+  getInstance(str: string | undefined): string | undefined {
+    str = str?.trim() ?? ''
 
     if (/^https?:\/\//.test(str)) {
       try {
-        hostname = new URL(str).hostname
+        return new URL(str).hostname
       } catch {}
     } else if (/[^\.]+\.[^\.]{2,}/.test(str)) {
-      hostname = str
+      return str
     }
-
-    return hostname || null
   },
 
   filterObject<T>(obj: T): T | null {
@@ -72,6 +68,7 @@ export const Utils = {
 
   mustache(...args: Parameters<typeof Mustache.render>) {
     args[1] = this.filterObject(args[1])
+
     return Mustache.render(args[0], args[1], args[2], {
       escape: (str) => str,
     })

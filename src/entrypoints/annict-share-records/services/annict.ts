@@ -1,5 +1,3 @@
-import { GMGetValue, GMInfo } from 'userjs/gm'
-
 type AnnictMe = {
   id: number
   username: string
@@ -76,7 +74,7 @@ export const Annict = {
     CLIENT_SECRET: 'CUYwC_JJ6wtz0jxd9xGD4GyIo3tf1Mxd3VsreOZyBtI',
     OAUTH_REDIRECT_URI: 'https://midra.me/empty/oauth/asr/annict',
 
-    getToken: async () => (await GMGetValue('annictToken', '')) ?? '',
+    getToken: () => GM.getValue<string>('annictToken', ''),
 
     oauthAuthorize() {
       const url = new URL('/oauth/authorize', Annict.API.BASE_URL)
@@ -109,7 +107,7 @@ export const Annict = {
           return access_token
         }
       } catch (e) {
-        console.error(`[${GMInfo?.script.name}]`, e)
+        console.error(`[${GM.info.script.name}]`, e)
       }
 
       return null
@@ -125,7 +123,7 @@ export const Annict = {
 
         return await res.json()
       } catch (e) {
-        console.error(`[${GMInfo?.script.name}]`, e)
+        console.error(`[${GM.info.script.name}]`, e)
       }
 
       return null
@@ -143,7 +141,7 @@ export const Annict = {
 
         return works[0]
       } catch (e) {
-        console.error(`[${GMInfo?.script.name}]`, e)
+        console.error(`[${GM.info.script.name}]`, e)
       }
 
       return null
@@ -161,7 +159,7 @@ export const Annict = {
 
         return episodes[0]
       } catch (e) {
-        console.error(`[${GMInfo?.script.name}]`, e)
+        console.error(`[${GM.info.script.name}]`, e)
       }
 
       return null

@@ -1,5 +1,3 @@
-import { GMInfo } from 'userjs/gm'
-
 import { Utils } from '../utils'
 
 export const Mastodon = {
@@ -30,7 +28,7 @@ export const Mastodon = {
           })
           return await res.json()
         } catch (e) {
-          console.error(`[${GMInfo?.script.name}]`, e)
+          console.error(`[${GM.info.script.name}]`, e)
         }
       }
     },

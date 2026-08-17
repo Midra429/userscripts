@@ -1,5 +1,3 @@
-import { GMInfo, GMSetValue } from 'userjs/gm'
-
 import { Annict } from './services/annict'
 // import { Bluesky } from './services/bluesky'
 import { Mastodon } from './services/mastodon'
@@ -12,22 +10,14 @@ export const metadata: UserScriptMetadata = {
   name: 'Annict Share Records',
   description: '記録をFediverse(Misskey, Mastodon, Bluesky)へ投稿',
   namespace: 'https://midra.me',
-  version: '2.5.4',
+  version: '2.5.5',
   author: 'Midra',
   license: 'MIT',
   icon: 'https://annict.com/favicon.ico',
   match: ['https://*.annict.com/*', 'https://midra.me/empty/oauth/asr/*'],
   'run-at': 'document-end',
   noframes: true,
-  grant: [
-    'unsafeWindow',
-    'GM_info',
-    'GM.info',
-    'GM_setValue',
-    'GM.setValue',
-    'GM_getValue',
-    'GM.getValue',
-  ],
+  grant: ['unsafeWindow', 'GM.info', 'GM.setValue', 'GM.getValue'],
   connect: ['annict.com'],
   updateURL:
     'https://raw.githubusercontent.com/Midra429/userscripts/refs/heads/main/dist/annict-share-records.meta.js',
@@ -76,10 +66,11 @@ export async function main() {
     const token = await Annict.API.oauthToken(code)
 
     if (token) {
-      await GMSetValue('annictToken', token)
+      await GM.setValue('annictToken', token)
+
       window.close()
     } else {
-      alert(`[${GMInfo?.script.name}] Annictの認証に失敗しました`)
+      alert(`[${GM.info.script.name}] Annictの認証に失敗しました`)
     }
   }
   // MiAuth リダイレクト
@@ -88,10 +79,10 @@ export async function main() {
     const token = session && (await Misskey.API.requestToken(session))
 
     if (token) {
-      await GMSetValue('misskeyToken', token)
+      await GM.setValue('misskeyToken', token)
       window.close()
     } else {
-      alert(`[${GMInfo?.script.name}] Misskeyの認証に失敗しました`)
+      alert(`[${GM.info.script.name}] Misskeyの認証に失敗しました`)
     }
   }
   // Annict
@@ -102,7 +93,7 @@ export async function main() {
 
       setTimeout(() => location.reload(), 2000)
     } else {
-      console.log(`[${GMInfo?.script.name}] v${GMInfo?.script.version}`)
+      console.log(`[${GM.info.script.name}] v${GM.info.script.version}`)
 
       const settings = await Utils.getSettings()
       const user = await Annict.API.me()

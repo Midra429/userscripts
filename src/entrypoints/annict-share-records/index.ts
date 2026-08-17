@@ -12,7 +12,7 @@ export const metadata: UserScriptMetadata = {
   name: 'Annict Share Records',
   description: '記録をFediverse(Misskey, Mastodon, Bluesky)へ投稿',
   namespace: 'https://midra.me',
-  version: '2.5.3',
+  version: '2.5.4',
   author: 'Midra',
   license: 'MIT',
   icon: 'https://annict.com/favicon.ico',
@@ -30,7 +30,7 @@ export const metadata: UserScriptMetadata = {
   ],
   connect: ['annict.com'],
   updateURL:
-    'https://raw.githubusercontent.com/Midra429/userscripts/refs/heads/main/dist/annict-share-records.user.js',
+    'https://raw.githubusercontent.com/Midra429/userscripts/refs/heads/main/dist/annict-share-records.meta.js',
   downloadURL:
     'https://raw.githubusercontent.com/Midra429/userscripts/refs/heads/main/dist/annict-share-records.user.js',
 }

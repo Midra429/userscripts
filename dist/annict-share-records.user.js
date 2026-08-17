@@ -2,7 +2,7 @@
 // @name        Annict Share Records
 // @description 記録をFediverse(Misskey, Mastodon, Bluesky)へ投稿
 // @namespace   https://midra.me
-// @version     2.5.4
+// @version     2.5.5
 // @author      Midra
 // @license     MIT
 // @icon        https://annict.com/favicon.ico
@@ -11,11 +11,8 @@
 // @run-at      document-end
 // @noframes
 // @grant       unsafeWindow
-// @grant       GM_info
 // @grant       GM.info
-// @grant       GM_setValue
 // @grant       GM.setValue
-// @grant       GM_getValue
 // @grant       GM.getValue
 // @connect     annict.com
 // @updateURL   https://raw.githubusercontent.com/Midra429/userscripts/refs/heads/main/dist/annict-share-records.meta.js
@@ -23,23 +20,13 @@
 // ==/UserScript==
 "use strict";
 (function() {
-	const GMInfo = typeof GM !== "undefined" && GM.info || typeof GM_info !== "undefined" && GM_info || null;
-	async function GMGetValue(name, defaultValue) {
-		if (typeof GM !== "undefined") return GM.getValue?.(name, defaultValue);
-		if (typeof GM_getValue !== "undefined") return GM_getValue(name, defaultValue);
-		return defaultValue ?? null;
-	}
-	async function GMSetValue(name, value) {
-		if (typeof GM !== "undefined") return GM.setValue?.(name, value);
-		if (typeof GM_setValue !== "undefined") return GM_setValue(name, value);
-	}
 	const Annict = {
 		API: {
 			BASE_URL: "https://api.annict.com/",
 			CLIENT_ID: "sDz7ln_BRu4_JEyJW6sLDmGPyCmgCESkUaKRxxuT_2Q",
 			CLIENT_SECRET: "CUYwC_JJ6wtz0jxd9xGD4GyIo3tf1Mxd3VsreOZyBtI",
 			OAUTH_REDIRECT_URI: "https://midra.me/empty/oauth/asr/annict",
-			getToken: async () => await GMGetValue("annictToken", "") ?? "",
+			getToken: () => GM.getValue("annictToken", ""),
 			oauthAuthorize() {
 				const url = new URL("/oauth/authorize", Annict.API.BASE_URL);
 				url.searchParams.set("client_id", Annict.API.CLIENT_ID);
@@ -60,7 +47,7 @@
 					const { access_token } = await (await fetch(url, { method: "POST" })).json();
 					if (typeof access_token === "string") return access_token;
 				} catch (e) {
-					console.error(`[${GMInfo?.script.name}]`, e);
+					console.error(`[${GM.info.script.name}]`, e);
 				}
 				return null;
 			},
@@ -70,7 +57,7 @@
 					url.searchParams.set("access_token", await Annict.API.getToken());
 					return await (await fetch(url)).json();
 				} catch (e) {
-					console.error(`[${GMInfo?.script.name}]`, e);
+					console.error(`[${GM.info.script.name}]`, e);
 				}
 				return null;
 			},
@@ -82,7 +69,7 @@
 					const { works } = await (await fetch(url)).json();
 					return works[0];
 				} catch (e) {
-					console.error(`[${GMInfo?.script.name}]`, e);
+					console.error(`[${GM.info.script.name}]`, e);
 				}
 				return null;
 			},
@@ -94,7 +81,7 @@
 					const { episodes } = await (await fetch(url)).json();
 					return episodes[0];
 				} catch (e) {
-					console.error(`[${GMInfo?.script.name}]`, e);
+					console.error(`[${GM.info.script.name}]`, e);
 				}
 				return null;
 			}
@@ -507,9 +494,9 @@
 	mustache.Writer = Writer;
 	const Misskey = { API: {
 		REDIRECT_URL: "https://midra.me/empty/oauth/asr/misskey",
-		getToken: async () => await GMGetValue("misskeyToken", "") ?? "",
+		getToken: () => GM.getValue("misskeyToken", ""),
 		async authorize() {
-			const instance = Utils.getInstance(await Utils.getSetting("misskey_instance") ?? "");
+			const instance = Utils.getInstance(await Utils.getSetting("misskey_instance"));
 			if (instance) {
 				const session = crypto.randomUUID();
 				const url = new URL(`/miauth/${session}`, `https://${instance}`);
@@ -521,18 +508,18 @@
 			}
 		},
 		async requestToken(session) {
-			if (!session) return null;
-			const instance = Utils.getInstance(await Utils.getSetting("misskey_instance") ?? "");
+			if (!session) return;
+			const instance = Utils.getInstance(await Utils.getSetting("misskey_instance"));
 			if (instance) try {
 				const url = new URL(`/api/miauth/${session}/check`, `https://${instance}`);
 				return (await (await fetch(url, { method: "POST" })).json()).token;
 			} catch (e) {
-				console.error(`[${GMInfo?.script.name}]`, e);
+				console.error(`[${GM.info.script.name}]`, e);
 			}
 		},
 		async notesCreate(text) {
 			text = text.trim();
-			const instance = Utils.getInstance(await Utils.getSetting("misskey_instance") ?? "");
+			const instance = Utils.getInstance(await Utils.getSetting("misskey_instance"));
 			const token = await Misskey.API.getToken();
 			if (text && instance && token) try {
 				const url = new URL("/api/notes/create", `https://${instance}`);
@@ -546,7 +533,7 @@
 					})
 				})).json();
 			} catch (e) {
-				console.error(`[${GMInfo?.script.name}]`, e);
+				console.error(`[${GM.info.script.name}]`, e);
 			}
 		}
 	} };
@@ -679,21 +666,19 @@ record.comment: 感想
 	};
 	const Utils = {
 		async getSetting(key) {
-			return GMGetValue(`setting_${key}`, SETTINGS_INIT_DATA[key].default);
+			return GM.getValue(`setting_${key}`, SETTINGS_INIT_DATA[key].default);
 		},
 		async getSettings() {
 			const settings = {};
-			for (const key of SETTINGS_KEYS) settings[key] = await GMGetValue(`setting_${key}`, SETTINGS_INIT_DATA[key].default) ?? void 0;
+			for (const key of SETTINGS_KEYS) settings[key] = await this.getSetting(key);
 			return settings;
 		},
 		getInstance(str) {
-			str = str.trim();
-			let hostname = "";
+			str = str?.trim() ?? "";
 			if (/^https?:\/\//.test(str)) try {
-				hostname = new URL(str).hostname;
+				return new URL(str).hostname;
 			} catch {}
-			else if (/[^\.]+\.[^\.]{2,}/.test(str)) hostname = str;
-			return hostname || null;
+			else if (/[^\.]+\.[^\.]{2,}/.test(str)) return str;
 		},
 		filterObject(obj) {
 			if (obj !== null && typeof obj === "object") {
@@ -734,7 +719,7 @@ record.comment: 感想
 				})
 			})).json();
 		} catch (e) {
-			console.error(`[${GMInfo?.script.name}]`, e);
+			console.error(`[${GM.info.script.name}]`, e);
 		}
 	} } };
 	var Settings = class Settings {
@@ -747,7 +732,7 @@ record.comment: 感想
 			this.#element.id = Settings.ID;
 			const title = document.createElement("h2");
 			title.className = "fw-bold h3 mb-0 mt-3";
-			title.textContent = `${GMInfo?.script.name} v${GMInfo?.script.version}`;
+			title.textContent = `${GM.info.script.name} v${GM.info.script.version}`;
 			this.#element.appendChild(title);
 			const card = document.createElement("div");
 			card.className = "card mt-3 u-card-flat";
@@ -797,21 +782,19 @@ record.comment: 感想
 			buttonContainer.className = "form-submit text-center";
 			buttonContainer.appendChild(this.#generate.button("保存", async () => {
 				await this.save();
-				alert(`[${GMInfo?.script.name}]\n設定を保存しました`);
+				alert(`[${GM.info.script.name}]\n設定を保存しました`);
 				location.reload();
 			}, true));
 			cardBody.appendChild(buttonContainer);
 			return this.#element;
 		}
 		async save() {
-			let promises = [];
 			for (const key in this.#items) {
 				const item = this.#items[key];
 				let value = null;
 				if (item instanceof HTMLInputElement || item instanceof HTMLTextAreaElement || item instanceof HTMLSelectElement) value = item.value.trim();
-				if (value != null) promises.push(GMSetValue(`setting_${key}`, value));
+				if (value != null) await GM.setValue(`setting_${key}`, value);
 			}
-			await Promise.all(promises);
 		}
 		#generate = {
 			label(id, text) {
@@ -879,22 +862,22 @@ record.comment: 感想
 			const code = new URLSearchParams(location.search).get("code");
 			const token = await Annict.API.oauthToken(code);
 			if (token) {
-				await GMSetValue("annictToken", token);
+				await GM.setValue("annictToken", token);
 				window.close();
-			} else alert(`[${GMInfo?.script.name}] Annictの認証に失敗しました`);
+			} else alert(`[${GM.info.script.name}] Annictの認証に失敗しました`);
 		} else if (location.href.startsWith(Misskey.API.REDIRECT_URL)) {
 			const session = new URLSearchParams(location.search).get("session");
 			const token = session && await Misskey.API.requestToken(session);
 			if (token) {
-				await GMSetValue("misskeyToken", token);
+				await GM.setValue("misskeyToken", token);
 				window.close();
-			} else alert(`[${GMInfo?.script.name}] Misskeyの認証に失敗しました`);
+			} else alert(`[${GM.info.script.name}] Misskeyの認証に失敗しました`);
 		} else if (location.hostname === "annict.com") {
 			if (Annict.isLoggedin() && !await Annict.API.getToken()) {
 				Annict.API.oauthAuthorize();
 				setTimeout(() => location.reload(), 2e3);
 			} else {
-				console.log(`[${GMInfo?.script.name}] v${GMInfo?.script.version}`);
+				console.log(`[${GM.info.script.name}] v${GM.info.script.version}`);
 				const settings = await Utils.getSettings();
 				const user = await Annict.API.me();
 				const getEpisodeRecordPostText = async ({ episodeId, recordId, comment }) => {

@@ -1,17 +1,20 @@
-import { execSync } from 'node:child_process'
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs'
-import { relative, resolve } from 'node:path'
-import { cwd, env, exit } from 'node:process'
+import child_process from 'node:child_process'
+import fs from 'node:fs/promises'
+import path from 'node:path'
+import process from 'node:process'
+import util from 'node:util'
 
 import {
-  confirm,
   intro,
   isCancel,
   log,
   outro,
+  select,
   spinner,
   text,
 } from '@clack/prompts'
+
+const exec = util.promisify(child_process.exec)
 
 function isAlphanumeric(input: string): boolean {
   return /^[a-z0-9\-_\s]+$/i.test(input)
@@ -41,7 +44,7 @@ let scriptName = await text({
 if (isCancel(scriptName)) {
   log.error('操作がキャンセルされました')
 
-  exit(0)
+  process.exit(0)
 }
 
 scriptName = normalizeScriptName(scriptName)
@@ -65,20 +68,31 @@ let scriptId = await text({
 if (isCancel(scriptId)) {
   log.error('操作がキャンセルされました')
 
-  exit(0)
+  process.exit(0)
 }
 
 scriptId = normalizeScriptId(scriptId)
 
-// ファイル作成
-const shouldProceed = await confirm({
-  message: 'ファイルを作成しますか？',
+// ディレクトリ構成
+const dirStruct = await select<[string, string]>({
+  message: 'ディレクトリ構成',
+  options: [
+    {
+      label: `${scriptId}/index.ts`,
+      value: [scriptId, 'index.ts'],
+    },
+    {
+      label: `${scriptId}.ts`,
+      value: ['', `${scriptId}.ts`],
+    },
+  ],
+  showInstructions: false,
 })
 
-if (isCancel(shouldProceed) || !shouldProceed) {
-  log.error('ファイルの作成を中断しました')
+if (isCancel(dirStruct)) {
+  log.error('操作がキャンセルされました')
 
-  exit(0)
+  process.exit(0)
 }
 
 const s = spinner()
@@ -86,39 +100,50 @@ const s = spinner()
 s.start('ファイルを作成中...')
 
 // ファイルのパス
-const outDirPath = resolve(__dirname, '../src/entrypoints', scriptId)
-const outFilePath = relative(cwd(), resolve(outDirPath, 'index.ts'))
+const [dirPath, filePath] = dirStruct
+const outDirPath = path.resolve(__dirname, '../src/entrypoints', dirPath)
+const outFilePath = path.relative(
+  process.cwd(),
+  path.resolve(outDirPath, filePath)
+)
 
-if (existsSync(outFilePath)) {
-  s.error('同名のファイルが存在します')
+try {
+  // ディレクトリ作成
+  await fs.mkdir(outDirPath, { recursive: true })
 
-  exit(0)
-} else {
-  const template = `
+  // ファイル作成
+  await fs.writeFile(
+    outFilePath,
+    `
     export const metadata: UserScriptMetadata = {
       name: '${escapeSingleQuote(scriptName)}',
       description: '',
-      namespace: '${escapeSingleQuote(env.USERJS_NAMESPACE)}',
+      namespace: '${escapeSingleQuote(process.env.USERJS_NAMESPACE)}',
       version: '0.0.0',
-      author: '${escapeSingleQuote(env.USERJS_AUTHOR)}',
-      license: '${escapeSingleQuote(env.USERJS_LICENSE)}',
+      author: '${escapeSingleQuote(process.env.USERJS_AUTHOR)}',
+      license: '${escapeSingleQuote(process.env.USERJS_LICENSE)}',
       match: [],
-      updateURL: '${escapeSingleQuote(env.USERJS_UPDATE_URL?.replaceAll('<id>', scriptId))}',
-      downloadURL: '${escapeSingleQuote(env.USERJS_DOWNLOAD_URL?.replaceAll('<id>', scriptId))}',
+      updateURL: '${escapeSingleQuote(process.env.USERJS_UPDATE_URL?.replaceAll('<id>', scriptId))}',
+      downloadURL: '${escapeSingleQuote(process.env.USERJS_DOWNLOAD_URL?.replaceAll('<id>', scriptId))}',
     }
 
     export function main() {}
-  `
+    `,
+    { flag: 'wx' }
+  )
 
-  // ファイル作成
-  mkdirSync(outDirPath, { recursive: true })
-  writeFileSync(outFilePath, template)
   // フォーマット
-  execSync(`biome format --write ${outFilePath}`)
+  await exec(`biome format --write ${outFilePath}`).catch(() => {
+    log.error('ファイルのフォーマットに失敗しました')
+  })
 
   s.stop('ファイルを作成しました')
 
   log.message(outFilePath)
 
   outro('終了')
+} catch {
+  s.error('同名のファイルが存在します')
+
+  process.exit(0)
 }

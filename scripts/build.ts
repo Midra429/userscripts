@@ -1,41 +1,50 @@
-import { globSync, readFileSync, writeFileSync } from 'node:fs'
-import { resolve } from 'node:path'
-import { exit } from 'node:process'
+import type { SelectOptions } from '@clack/prompts'
+
+import fs from 'node:fs/promises'
+import path from 'node:path'
+import process from 'node:process'
 
 import { intro, isCancel, log, outro, select, spinner } from '@clack/prompts'
 import semver from 'semver'
 import { buildUserJS } from 'userjs/build'
 
+const SCRIPT_ID_REGEXP = /(?<=\/entrypoints\/)[^\/]+(?=(?:\/index)?\.ts$)/
+
 intro('build')
 
 // ファイル一覧を取得
-const scriptPaths = globSync([
-  resolve(__dirname, '../src/entrypoints/*.ts'),
-  resolve(__dirname, '../src/entrypoints/*/index.ts'),
-]).sort()
-const scriptIds = scriptPaths.map(
-  (v) => v.match(/(?<=\/entrypoints\/)[^\/]+(?=(?:\/index)?\.ts$)/)![0]
-)
+const entryPath = path.resolve(__dirname, '../src/entrypoints')
+const entryPattern = [
+  path.join(entryPath, '*.ts'),
+  path.join(entryPath, '*/index.ts'),
+]
+
+const selectOptions: SelectOptions<[string, string]>['options'] = []
+
+for await (const entry of fs.glob(entryPattern)) {
+  const id = entry.match(SCRIPT_ID_REGEXP)![0]
+
+  selectOptions.push({
+    label: id,
+    value: [id, entry],
+  })
+}
 
 // スクリプトを選択
-const scriptIdx = await select({
+const selectedScript = await select({
   message: 'ビルドするスクリプトを選択',
-  options: scriptIds.map((id, idx) => ({
-    label: id,
-    value: idx,
-  })),
+  options: selectOptions,
   showInstructions: false,
 })
 
-if (isCancel(scriptIdx)) {
+if (isCancel(selectedScript)) {
   log.error('操作がキャンセルされました')
 
-  exit(0)
+  process.exit(0)
 }
 
 // スクリプトの詳細
-const scriptId = scriptIds[scriptIdx]
-const scriptPath = scriptPaths[scriptIdx]
+const [scriptId, scriptPath] = selectedScript
 
 const { metadata } = (await import(scriptPath)) as {
   metadata: UserScriptMetadata
@@ -72,16 +81,16 @@ const newVersion = await select({
 if (isCancel(newVersion)) {
   log.error('操作がキャンセルされました')
 
-  exit(0)
+  process.exit(0)
 }
 
 // `metadata.version`を上書き
 if (newVersion !== currentVersion) {
   metadata.version = newVersion
 
-  writeFileSync(
+  await fs.writeFile(
     scriptPath,
-    readFileSync(scriptPath, { encoding: 'utf8' }).replace(
+    (await fs.readFile(scriptPath, { encoding: 'utf8' })).replace(
       /(export\s+const\s+metadata(?:\s*:\s*[\w$]+)?\s*=\s*\{[\s\S]*?\bversion\s*:\s*['"])[^'"]*(['"])/,
       `$1${newVersion}$2`
     )
@@ -107,5 +116,5 @@ try {
 
   s.error('スクリプトのビルドに失敗しました')
 
-  exit(0)
+  process.exit(0)
 }

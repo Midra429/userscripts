@@ -29,7 +29,6 @@ type UserScriptGmFunctions =
   | 'deleteValues'
   | 'addValueChangeListener'
   | 'removeValueChangeListener'
-  | 'xmlhttpRequest'
   | 'webRequest'
   | 'cookie'
   | 'audio'
@@ -37,7 +36,9 @@ type UserScriptGmFunctions =
 type UserScriptGrant =
   | 'unsafeWindow'
   | `GM_${UserScriptGmFunctions}`
+  | 'GM_xmlhttpRequest'
   | `GM.${UserScriptGmFunctions}`
+  | 'GM.xmlHttpRequest'
   | 'window.onurlchange'
   | 'window.close'
   | 'window.focus'

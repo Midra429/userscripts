@@ -10,6 +10,7 @@
     "build": "bun run scripts/build.ts"
   },
   "dependencies": {
+    "@midra/nco-utils": "^1.2.14",
     "mustache": "^4.2.0"
   },
   "devDependencies": {

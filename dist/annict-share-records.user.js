@@ -2,7 +2,7 @@
 // @name        Annict Share Records
 // @description 記録をFediverse(Misskey, Mastodon, Bluesky)へ投稿
 // @namespace   https://midra.me
-// @version     2.5.5
+// @version     2.5.6
 // @author      Midra
 // @license     MIT
 // @icon        https://annict.com/favicon.ico
@@ -953,16 +953,7 @@ record.comment: 感想
 					return promise;
 				} });
 				await initSettings();
-				const obs_options = {
-					childList: true,
-					subtree: true
-				};
-				const obs = new MutationObserver(async () => {
-					obs.disconnect();
-					await initSettings();
-					obs.observe(document, obs_options);
-				});
-				obs.observe(document, obs_options);
+				document.addEventListener("turbo:load", initSettings);
 			}
 		}
 	}

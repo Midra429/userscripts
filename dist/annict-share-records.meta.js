@@ -2,7 +2,7 @@
 // @name        Annict Share Records
 // @description 記録をFediverse(Misskey, Mastodon, Bluesky)へ投稿
 // @namespace   https://midra.me
-// @version     2.5.5
+// @version     2.5.6
 // @author      Midra
 // @license     MIT
 // @icon        https://annict.com/favicon.ico

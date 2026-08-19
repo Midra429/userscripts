@@ -8,7 +8,7 @@ export const metadata: UserScriptMetadata = {
   name: 'Annict Music Info',
   description: 'Annictの作品ページに関連曲の情報を追加するスクリプト',
   namespace: 'https://midra.me/',
-  version: '1.0.0',
+  version: '1.0.1',
   author: 'Midra <me@midra.me> (https://github.com/Midra429)',
   license: 'MIT',
   icon: 'https://annict.com/favicon.ico',
@@ -138,7 +138,7 @@ export async function main() {
         const rowMatched = row.match(/^:([^:]+):(.+)$/)
         if (!rowMatched) continue
 
-        if (rowMatched[1].startsWith('歌')) {
+        if (rowMatched[1].includes('歌')) {
           artists.push([rowMatched[1], rowMatched[2]])
         } else {
           others.push([rowMatched[1], rowMatched[2]])

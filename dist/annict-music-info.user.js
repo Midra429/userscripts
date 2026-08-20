@@ -2,7 +2,7 @@
 // @name        Annict Music Info
 // @description Annictの作品ページに関連曲の情報を追加するスクリプト
 // @namespace   https://midra.me/
-// @version     1.1.0
+// @version     1.1.1
 // @author      Midra <me@midra.me> (https://github.com/Midra429)
 // @license     MIT
 // @icon        https://annict.com/favicon.ico
@@ -128,7 +128,7 @@
 		}
 	];
 	function getSearchURL(baseUrl, data) {
-		const artist = data.credits.find(([v]) => v.includes("歌"));
+		const artist = data.credits.find(([v]) => v.includes("歌") || v.includes("アーティスト"));
 		const keyword = `${data.title} ${artist?.[1] ?? ""}`.trim();
 		return baseUrl + encodeURIComponent(keyword);
 	}
@@ -187,7 +187,7 @@
 				for (const row of rows) {
 					const rowMatched = row.match(/^:([^:]+):(.+)$/);
 					if (!rowMatched) continue;
-					if (rowMatched[1].includes("歌")) artists.push([rowMatched[1], rowMatched[2]]);
+					if (rowMatched[1].includes("歌") || rowMatched[1].includes("アーティスト")) artists.push([rowMatched[1], rowMatched[2]]);
 					else others.push([rowMatched[1], rowMatched[2]]);
 				}
 				songs.push({

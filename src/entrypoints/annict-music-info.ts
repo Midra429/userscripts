@@ -8,7 +8,7 @@ export const metadata: UserScriptMetadata = {
   name: 'Annict Music Info',
   description: 'Annictの作品ページに関連曲の情報を追加するスクリプト',
   namespace: 'https://midra.me/',
-  version: '1.1.0',
+  version: '1.1.1',
   author: 'Midra <me@midra.me> (https://github.com/Midra429)',
   license: 'MIT',
   icon: 'https://annict.com/favicon.ico',
@@ -60,7 +60,9 @@ const SEARCH_URLS = [
 ]
 
 function getSearchURL(baseUrl: string, data: SongData): string {
-  const artist = data.credits.find(([v]) => v.includes('歌'))
+  const artist = data.credits.find(
+    ([v]) => v.includes('歌') || v.includes('アーティスト')
+  )
   const keyword = `${data.title} ${artist?.[1] ?? ''}`.trim()
 
   return baseUrl + encodeURIComponent(keyword)
@@ -169,7 +171,10 @@ export async function main() {
         const rowMatched = row.match(/^:([^:]+):(.+)$/)
         if (!rowMatched) continue
 
-        if (rowMatched[1].includes('歌')) {
+        if (
+          rowMatched[1].includes('歌') ||
+          rowMatched[1].includes('アーティスト')
+        ) {
           artists.push([rowMatched[1], rowMatched[2]])
         } else {
           others.push([rowMatched[1], rowMatched[2]])

@@ -50,12 +50,8 @@ const SEARCH_URLS = [
     baseUrl: 'https://music.youtube.com/search?q=',
   },
   {
-    label: 'Amazon Music',
-    baseUrl: 'https://www.amazon.co.jp/music/player/search/',
-  },
-  {
-    label: 'LINE MUSIC',
-    baseUrl: 'https://music.line.me/webapp/search?query=',
+    label: 'Google',
+    baseUrl: 'https://www.google.com/search?q=',
   },
 ]
 

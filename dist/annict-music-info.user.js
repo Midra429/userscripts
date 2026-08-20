@@ -2,7 +2,7 @@
 // @name        Annict Music Info
 // @description Annictの作品ページに関連曲の情報を追加するスクリプト
 // @namespace   https://midra.me/
-// @version     1.0.1
+// @version     1.1.0
 // @author      Midra <me@midra.me> (https://github.com/Midra429)
 // @license     MIT
 // @icon        https://annict.com/favicon.ico
@@ -104,6 +104,34 @@
 		return lastIndex ? html + str.slice(lastIndex) : str;
 	}
 	const CACHE_TTL = 864e5;
+	const SYOBOCAL_JSON_URL = "http://cal.syoboi.jp/json.php";
+	const SEARCH_URLS = [
+		{
+			label: "Spotify",
+			baseUrl: "https://open.spotify.com/search/"
+		},
+		{
+			label: "Apple Music",
+			baseUrl: "https://music.apple.com/jp/search?term="
+		},
+		{
+			label: "YouTube Music",
+			baseUrl: "https://music.youtube.com/search?q="
+		},
+		{
+			label: "Amazon Music",
+			baseUrl: "https://www.amazon.co.jp/music/player/search/"
+		},
+		{
+			label: "LINE MUSIC",
+			baseUrl: "https://music.line.me/webapp/search?query="
+		}
+	];
+	function getSearchURL(baseUrl, data) {
+		const artist = data.credits.find(([v]) => v.includes("歌"));
+		const keyword = `${data.title} ${artist?.[1] ?? ""}`.trim();
+		return baseUrl + encodeURIComponent(keyword);
+	}
 	async function main() {
 		setLoggerName(GM.info.script.name);
 		logger.log(`v${GM.info.script.version}`);
@@ -123,13 +151,14 @@
 			const scCache = await GM.getValue(scCacheKey, null);
 			let scComment = scCache?.comment;
 			if (!scCache || !scComment || CACHE_TTL < Date.now() - scCache.lastModified) {
-				const syobocalJsonUrl = new URL("http://cal.syoboi.jp/json.php");
-				syobocalJsonUrl.searchParams.set("Req", "TitleFull");
-				syobocalJsonUrl.searchParams.set("TID", syobocalId);
+				const scJsonUrl = `${SYOBOCAL_JSON_URL}?${new URLSearchParams({
+					Req: "TitleFull",
+					TID: syobocalId
+				})}`;
 				try {
 					const { response } = await GM.xmlHttpRequest({
 						method: "GET",
-						url: syobocalJsonUrl,
+						url: scJsonUrl,
 						headers: {
 							"Content-Type": "application/json",
 							"User-Agent": userAgent
@@ -171,9 +200,9 @@
 			if (!songs.length) return;
 			const content = document.querySelector(".l-default__main .l-default__content");
 			if (!content) return;
-			const html = songs.flatMap(({ type, title, credits }) => [
+			const html = songs.flatMap((song) => [
 				"<div class=\"container mt-5\">",
-				`<h2 class="fw-bold h3 mb-3">${escapeHTML(type)}</h2>`,
+				`<h2 class="fw-bold h3 mb-3">${escapeHTML(song.type)}</h2>`,
 				"</div>",
 				"<div class=\"container u-container-flat\">",
 				"<div class=\"card u-card-flat\">",
@@ -182,10 +211,10 @@
 				"<div class=\"col-12\">",
 				"<div class=\"g-3 row\">",
 				"<div class=\"col-4 text-end\">タイトル</div>",
-				`<div class="col-8 fw-bold">${escapeHTML(title)}</div>`,
+				`<div class="col-8 fw-bold">${escapeHTML(song.title)}</div>`,
 				"</div>",
 				"</div>",
-				...credits.flatMap(([head, data]) => [
+				...song.credits.flatMap(([head, data]) => [
 					"<div class=\"col-12\">",
 					"<div class=\"g-3 row\">",
 					`<div class="col-4 text-end">${escapeHTML(head)}</div>`,
@@ -193,6 +222,18 @@
 					"</div>",
 					"</div>"
 				]),
+				"<div class=\"col-12\">",
+				"<div class=\"g-3 row\">",
+				"<div class=\"col-4 text-end\">検索</div>",
+				"<div class=\"col-8\">",
+				SEARCH_URLS.map(({ label, baseUrl }) => [
+					`<a href="${getSearchURL(baseUrl, song)}" target="_blank" rel="noreferrer" style="white-space: nowrap;">`,
+					label,
+					"</a>"
+				].join("")).join("<span>&ensp;/&ensp;</span>"),
+				"</div>",
+				"</div>",
+				"</div>",
 				"</div>",
 				"<div class=\"text-end text-muted u-very-small\">",
 				"引用元: しょぼいカレンダー",

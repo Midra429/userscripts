@@ -8,14 +8,20 @@ export const metadata: UserScriptMetadata = {
   name: 'Annict Music Info',
   description: 'Annictの作品ページに関連曲の情報を追加するスクリプト',
   namespace: 'https://midra.me/',
-  version: '1.1.2',
+  version: '1.1.3',
   author: 'Midra <me@midra.me> (https://github.com/Midra429)',
   license: 'MIT',
   icon: 'https://annict.com/favicon.ico',
   match: ['https://annict.com/*'],
   'run-at': 'document-start',
   noframes: true,
-  grant: ['GM.info', 'GM.setValue', 'GM.getValue', 'GM.xmlHttpRequest'],
+  grant: [
+    'GM.info',
+    'GM.openInTab',
+    'GM.setValue',
+    'GM.getValue',
+    'GM.xmlHttpRequest',
+  ],
   connect: ['cal.syoboi.jp'],
   updateURL:
     'https://raw.githubusercontent.com/Midra429/userscripts/refs/heads/main/dist/annict-music-info.meta.js',
@@ -229,7 +235,7 @@ export async function main() {
         /**********/ '<div class="col-12">',
         /************/ '<div class="g-3 row">',
         /**************/ '<div class="col-4 text-end">検索</div>',
-        /**************/ '<div class="col-8">',
+        /**************/ '<div class="col-8 ami-search-links">',
         SEARCH_URLS.map(({ label, baseUrl }) =>
           [
             /************/ `<a href="${getSearchURL(baseUrl, song)}" target="_blank" rel="noreferrer" style="white-space: nowrap;">`,
@@ -254,5 +260,16 @@ export async function main() {
       .join('')
 
     content.insertAdjacentHTML('beforeend', html)
+
+    const searchLinks = document.querySelectorAll<HTMLAnchorElement>(
+      '.ami-search-links > a'
+    )
+    for (const link of searchLinks) {
+      link.addEventListener('click', function (evt) {
+        evt.preventDefault()
+
+        GM.openInTab(this.href, { active: true })
+      })
+    }
   })
 }

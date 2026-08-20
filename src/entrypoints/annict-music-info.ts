@@ -8,7 +8,7 @@ export const metadata: UserScriptMetadata = {
   name: 'Annict Music Info',
   description: 'Annictの作品ページに関連曲の情報を追加するスクリプト',
   namespace: 'https://midra.me/',
-  version: '1.0.1',
+  version: '1.1.0',
   author: 'Midra <me@midra.me> (https://github.com/Midra429)',
   license: 'MIT',
   icon: 'https://annict.com/favicon.ico',
@@ -35,6 +35,36 @@ interface SongData {
 }
 
 const CACHE_TTL = 86400000
+const SYOBOCAL_JSON_URL = 'http://cal.syoboi.jp/json.php'
+const SEARCH_URLS = [
+  {
+    label: 'Spotify',
+    baseUrl: 'https://open.spotify.com/search/',
+  },
+  {
+    label: 'Apple Music',
+    baseUrl: 'https://music.apple.com/jp/search?term=',
+  },
+  {
+    label: 'YouTube Music',
+    baseUrl: 'https://music.youtube.com/search?q=',
+  },
+  {
+    label: 'Amazon Music',
+    baseUrl: 'https://www.amazon.co.jp/music/player/search/',
+  },
+  {
+    label: 'LINE MUSIC',
+    baseUrl: 'https://music.line.me/webapp/search?query=',
+  },
+]
+
+function getSearchURL(baseUrl: string, data: SongData): string {
+  const artist = data.credits.find(([v]) => v.includes('歌'))
+  const keyword = `${data.title} ${artist?.[1] ?? ''}`.trim()
+
+  return baseUrl + encodeURIComponent(keyword)
+}
 
 export async function main() {
   setLoggerName(GM.info.script.name)
@@ -83,14 +113,15 @@ export async function main() {
       CACHE_TTL < Date.now() - scCache.lastModified
     ) {
       // しょぼいカレンダー json.php
-      const syobocalJsonUrl = new URL('http://cal.syoboi.jp/json.php')
-      syobocalJsonUrl.searchParams.set('Req', 'TitleFull')
-      syobocalJsonUrl.searchParams.set('TID', syobocalId)
+      const scJsonUrl = `${SYOBOCAL_JSON_URL}?${new URLSearchParams({
+        Req: 'TitleFull',
+        TID: syobocalId,
+      })}`
 
       try {
         const { response } = await GM.xmlHttpRequest({
           method: 'GET',
-          url: syobocalJsonUrl,
+          url: scJsonUrl,
           headers: {
             'Content-Type': 'application/json',
             'User-Agent': userAgent,
@@ -163,10 +194,10 @@ export async function main() {
     if (!content) return
 
     const html = songs
-      .flatMap(({ type, title, credits }) => [
+      .flatMap((song) => [
         // header
         /**/ '<div class="container mt-5">',
-        /****/ `<h2 class="fw-bold h3 mb-3">${escapeHTML(type)}</h2>`,
+        /****/ `<h2 class="fw-bold h3 mb-3">${escapeHTML(song.type)}</h2>`,
         /**/ '</div>',
 
         // content
@@ -179,12 +210,12 @@ export async function main() {
         /**********/ '<div class="col-12">',
         /************/ '<div class="g-3 row">',
         /**************/ '<div class="col-4 text-end">タイトル</div>',
-        /**************/ `<div class="col-8 fw-bold">${escapeHTML(title)}</div>`,
+        /**************/ `<div class="col-8 fw-bold">${escapeHTML(song.title)}</div>`,
         /************/ '</div>',
         /**********/ '</div>',
 
         // 作詞/作曲/その他
-        ...credits.flatMap(([head, data]) => [
+        ...song.credits.flatMap(([head, data]) => [
           /********/ '<div class="col-12">',
           /**********/ '<div class="g-3 row">',
           /************/ `<div class="col-4 text-end">${escapeHTML(head)}</div>`,
@@ -192,6 +223,22 @@ export async function main() {
           /**********/ '</div>',
           /********/ '</div>',
         ]),
+
+        // 検索
+        /**********/ '<div class="col-12">',
+        /************/ '<div class="g-3 row">',
+        /**************/ '<div class="col-4 text-end">検索</div>',
+        /**************/ '<div class="col-8">',
+        SEARCH_URLS.map(({ label, baseUrl }) =>
+          [
+            /************/ `<a href="${getSearchURL(baseUrl, song)}" target="_blank" rel="noreferrer" style="white-space: nowrap;">`,
+            /**************/ label,
+            /************/ '</a>',
+          ].join('')
+        ).join('<span>&ensp;/&ensp;</span>'),
+        /**************/ '</div>',
+        /************/ '</div>',
+        /**********/ '</div>',
         /********/ '</div>',
 
         // 引用元

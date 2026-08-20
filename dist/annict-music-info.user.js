@@ -2,7 +2,7 @@
 // @name        Annict Music Info
 // @description Annictの作品ページに関連曲の情報を追加するスクリプト
 // @namespace   https://midra.me/
-// @version     1.1.1
+// @version     1.1.2
 // @author      Midra <me@midra.me> (https://github.com/Midra429)
 // @license     MIT
 // @icon        https://annict.com/favicon.ico
@@ -119,12 +119,8 @@
 			baseUrl: "https://music.youtube.com/search?q="
 		},
 		{
-			label: "Amazon Music",
-			baseUrl: "https://www.amazon.co.jp/music/player/search/"
-		},
-		{
-			label: "LINE MUSIC",
-			baseUrl: "https://music.line.me/webapp/search?query="
+			label: "Google",
+			baseUrl: "https://www.google.com/search?q="
 		}
 	];
 	function getSearchURL(baseUrl, data) {

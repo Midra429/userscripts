@@ -8,7 +8,7 @@ export const metadata: UserScriptMetadata = {
   name: 'Annict Music Info',
   description: 'Annictの作品ページに関連曲の情報を追加するスクリプト',
   namespace: 'https://midra.me/',
-  version: '1.1.1',
+  version: '1.1.2',
   author: 'Midra <me@midra.me> (https://github.com/Midra429)',
   license: 'MIT',
   icon: 'https://annict.com/favicon.ico',

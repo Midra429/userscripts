@@ -6,3 +6,6 @@ Midraが開発しているUserScript集です。
 
 ## [Annict Music Info](https://raw.githubusercontent.com/Midra429/userscripts/refs/heads/main/dist/annict-music-info.user.js)
 Annictの作品ページに関連曲の情報を追加するスクリプト
+
+## [dアニメストア メディアセッション](https://raw.githubusercontent.com/Midra429/userscripts/refs/heads/main/dist/danime-media-session.user.js)
+dアニメストアでメディアセッションAPIを使うようにするスクリプト

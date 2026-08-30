@@ -59,7 +59,7 @@ let scriptId = await text({
     if (!val?.length) {
       return 'スクリプトIDを入力してください'
     }
-    if (!isAlphanumeric(scriptName)) {
+    if (!isAlphanumeric(val)) {
       return '英数字/ハイフン/アンダースコアのみ使用できます'
     }
   },
@@ -127,7 +127,7 @@ try {
       downloadURL: '${escapeSingleQuote(process.env.USERJS_DOWNLOAD_URL?.replaceAll('<id>', scriptId))}',
     }
 
-    export function main() {}
+    export async function main() {}
     `,
     { flag: 'wx' }
   )

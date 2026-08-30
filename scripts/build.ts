@@ -46,7 +46,7 @@ if (isCancel(selectedScript)) {
 // スクリプトの詳細
 const [scriptId, scriptPath] = selectedScript
 
-const { metadata } = (await import(scriptPath)) as {
+const { metadata } = require(scriptPath) as {
   metadata: UserScriptMetadata
 }
 

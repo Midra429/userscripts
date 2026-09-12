@@ -41,8 +41,10 @@ let scriptName = await text({
   },
 })
 
-if (isCancel(scriptName)) {
-  log.error('操作がキャンセルされました')
+if (typeof scriptName === 'symbol') {
+  if (isCancel(scriptName)) {
+    log.error('操作がキャンセルされました')
+  }
 
   process.exit(0)
 }
@@ -65,8 +67,10 @@ let scriptId = await text({
   },
 })
 
-if (isCancel(scriptId)) {
-  log.error('操作がキャンセルされました')
+if (typeof scriptId === 'symbol') {
+  if (isCancel(scriptId)) {
+    log.error('操作がキャンセルされました')
+  }
 
   process.exit(0)
 }
@@ -89,8 +93,10 @@ const dirStruct = await select<[string, string]>({
   showInstructions: false,
 })
 
-if (isCancel(dirStruct)) {
-  log.error('操作がキャンセルされました')
+if (typeof dirStruct === 'symbol') {
+  if (isCancel(dirStruct)) {
+    log.error('操作がキャンセルされました')
+  }
 
   process.exit(0)
 }

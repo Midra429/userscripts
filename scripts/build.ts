@@ -5,8 +5,13 @@ import path from 'node:path'
 import process from 'node:process'
 
 import { intro, isCancel, log, outro, select, spinner } from '@clack/prompts'
+import Conf from 'conf'
 import semver from 'semver'
 import { buildUserJS } from 'userjs/build'
+
+const config = new Conf<{
+  lastSelectedScriptId: string | undefined
+}>({ projectName: '@midra/userjs' })
 
 const SCRIPT_ID_REGEXP = /(?<=\/entrypoints\/)[^\/]+(?=(?:\/index)?\.ts$)/
 
@@ -19,7 +24,9 @@ const entryPattern = [
   path.join(entryPath, '*/index.ts'),
 ]
 
-const selectOptions: SelectOptions<[string, string]>['options'] = []
+// 前回選択したスクリプトID
+
+const selectOptions: SelectOptions<[id: string, path: string]>['options'] = []
 
 for await (const entry of fs.glob(entryPattern)) {
   const id = entry.match(SCRIPT_ID_REGEXP)![0]
@@ -30,6 +37,18 @@ for await (const entry of fs.glob(entryPattern)) {
   })
 }
 
+// 前回選択したオプションを先頭に移動
+const lastSelectedScriptId = config.get('lastSelectedScriptId', undefined)
+const lastSelectedOptionIdx = selectOptions.findIndex(
+  (v) => v.value[0] === lastSelectedScriptId
+)
+if (lastSelectedOptionIdx !== -1) {
+  selectOptions.unshift({
+    ...selectOptions.splice(lastSelectedOptionIdx, 1)[0],
+    hint: '前回',
+  })
+}
+
 // スクリプトを選択
 const selectedScript = await select({
   message: 'ビルドするスクリプトを選択',
@@ -37,14 +56,19 @@ const selectedScript = await select({
   showInstructions: false,
 })
 
-if (isCancel(selectedScript)) {
-  log.error('操作がキャンセルされました')
+if (typeof selectedScript === 'symbol') {
+  if (isCancel(selectedScript)) {
+    log.error('操作がキャンセルされました')
+  }
 
   process.exit(0)
 }
 
 // スクリプトの詳細
 const [scriptId, scriptPath] = selectedScript
+
+// 選択したスクリプトIDを保存
+config.set('lastSelectedScriptId', scriptId)
 
 const { metadata } = require(scriptPath) as {
   metadata: UserScriptMetadata
@@ -78,8 +102,10 @@ const newVersion = await select({
   showInstructions: false,
 })
 
-if (isCancel(newVersion)) {
-  log.error('操作がキャンセルされました')
+if (typeof newVersion === 'symbol') {
+  if (isCancel(newVersion)) {
+    log.error('操作がキャンセルされました')
+  }
 
   process.exit(0)
 }

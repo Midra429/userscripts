@@ -2,7 +2,7 @@
 // @name        dアニメストア メディアセッション
 // @description dアニメストアでメディアセッションAPIを使うようにする
 // @namespace   https://midra.me/
-// @version     1.0.0
+// @version     1.0.1
 // @author      Midra <me@midra.me> (https://github.com/Midra429)
 // @license     MIT
 // @icon        https://animestore.docomo.ne.jp/favicon.ico
@@ -18,11 +18,10 @@
 (function() {
 	async function getImageInfo(url) {
 		try {
-			const { response } = await GM.xmlHttpRequest({
+			const blob = (await GM.xmlHttpRequest({
 				url,
 				responseType: "blob"
-			});
-			const blob = response;
+			})).response;
 			const img = new Image();
 			img.src = URL.createObjectURL(blob);
 			await img.decode();
@@ -46,7 +45,7 @@
 			artwork: [{
 				src: thumb,
 				sizes: imgInfo ? imgInfo.width + "x" + imgInfo.height : void 0,
-				type: imgInfo ? imgInfo.type : void 0
+				type: imgInfo?.type
 			}]
 		});
 	}

@@ -2,7 +2,7 @@
 // @name        dアニメストア メディアセッション
 // @description dアニメストアでメディアセッションAPIを使うようにする
 // @namespace   https://midra.me/
-// @version     1.0.0
+// @version     1.0.1
 // @author      Midra <me@midra.me> (https://github.com/Midra429)
 // @license     MIT
 // @icon        https://animestore.docomo.ne.jp/favicon.ico

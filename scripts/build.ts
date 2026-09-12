@@ -24,8 +24,6 @@ const entryPattern = [
   path.join(entryPath, '*/index.ts'),
 ]
 
-// 前回選択したスクリプトID
-
 const selectOptions: SelectOptions<[id: string, path: string]>['options'] = []
 
 for await (const entry of fs.glob(entryPattern)) {

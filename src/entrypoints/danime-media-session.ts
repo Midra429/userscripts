@@ -2,7 +2,7 @@ export const metadata: UserScriptMetadata = {
   name: 'dアニメストア メディアセッション',
   description: 'dアニメストアでメディアセッションAPIを使うようにする',
   namespace: 'https://midra.me/',
-  version: '1.0.0',
+  version: '1.0.1',
   author: 'Midra <me@midra.me> (https://github.com/Midra429)',
   license: 'MIT',
   icon: 'https://animestore.docomo.ne.jp/favicon.ico',
@@ -19,11 +19,11 @@ export const metadata: UserScriptMetadata = {
 
 async function getImageInfo(url: string) {
   try {
-    const { response } = await GM.xmlHttpRequest({
+    const res = await GM.xmlHttpRequest({
       url,
       responseType: 'blob',
     })
-    const blob = response as Blob
+    const blob = res.response as Blob
 
     const img = new Image()
     img.src = URL.createObjectURL(blob)
@@ -62,7 +62,7 @@ async function updateMediaMetadata() {
       {
         src: thumb,
         sizes: imgInfo ? imgInfo.width + 'x' + imgInfo.height : undefined,
-        type: imgInfo ? imgInfo.type : undefined,
+        type: imgInfo?.type,
       },
     ],
   })
